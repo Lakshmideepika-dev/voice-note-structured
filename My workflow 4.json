@@ -1,0 +1,278 @@
+{
+  "name": "My workflow 4",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "id": "0a2a5387-431b-459e-8b92-913ac5b47ca0",
+      "name": "Telegram Trigger",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.5,
+      "position": [
+        -416,
+        -16
+      ],
+      "webhookId": "3e8c5e9c-cf32-451e-837a-51d82ce03c3a",
+      "credentials": {
+        "telegramApi": {
+          "id": "6SIRWw9RjaC4uqL4",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{ $json.message.voice.file_id }}",
+        "additionalFields": {}
+      },
+      "id": "3157dce0-4426-4311-afa6-df9d1425f508",
+      "name": "Get a file",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        -208,
+        -16
+      ],
+      "webhookId": "e7f0af34-1d16-4ec6-906b-5931a2d46c82",
+      "credentials": {
+        "telegramApi": {
+          "id": "6SIRWw9RjaC4uqL4",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {}
+      },
+      "id": "a3bbbafe-88bb-4665-ac9b-db9edf0f51ee",
+      "name": "Transcribe a recording",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.3,
+      "position": [
+        16,
+        -16
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are an email assistant. The user message is a transcribed voice note asking to send an email. Use the \"email\" tool to look up the recipient's email address by name. Then return the recipient_name, recipient_email, subject, and body for the email in the required structured format."
+        }
+      },
+      "id": "84e14410-031c-4117-ae6c-90a61845999a",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        240,
+        -16
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-5-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "f6a41463-eea6-4ea8-bf19-fba1bafb5688",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        96,
+        208
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": null,
+          "name": "",
+          "__aiGatewayManaged": true
+        }
+      }
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1gInAEEiDH4wJJvdPpFqxhb3duAcUJh_0CCaRWF1vvzA",
+          "mode": "list",
+          "cachedResultName": "email",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gInAEEiDH4wJJvdPpFqxhb3duAcUJh_0CCaRWF1vvzA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": 704294671,
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1gInAEEiDH4wJJvdPpFqxhb3duAcUJh_0CCaRWF1vvzA/edit#gid=704294671"
+        },
+        "options": {}
+      },
+      "id": "2bf3e74b-6f98-4b2f-8eb5-fd16b722b819",
+      "name": "email",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        288,
+        240
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "SyOK7KGGel3TvEIC",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"recipient_name\": \"John Doe\",\n  \"recipient_email\": \"john@example.com\",\n  \"subject\": \"Meeting tomorrow\",\n  \"body\": \"Hi John, just confirming our meeting tomorrow at 10am.\"\n}"
+      },
+      "id": "e3a475e0-1e03-4eac-9f88-4d880f011afb",
+      "name": "Structured Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $json.output.recipient_email }}",
+        "subject": "={{ $json.output.subject }}",
+        "message": "={{ $json.output.body }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        576,
+        -32
+      ],
+      "id": "95365e3a-b358-484f-89e7-114db077208e",
+      "name": "Send a message",
+      "webhookId": "ff13ed67-c959-474f-8715-244bd676dcec",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "Tb2A7O3xuUEOhOuk",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "email": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "59dc766b-1ba0-4ac6-b203-a393419cb4f8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "f9bd9c62e1599977ba4370cd6e9c4e1624676419840a812e24f04cdc3890c0be"
+  },
+  "nodeGroups": [],
+  "id": "cdJMWuwPWAre645l",
+  "tags": []
+}
